@@ -1,8 +1,9 @@
+import {nanoid} from 'nanoid';
+
 export default class TrainingModel {
-  constructor(id, date, distance, kilometer = '') {
-    this.id = id;
+  constructor(date, distance) {
+    this.id = nanoid();
     this.date = date;
     this.distance = distance;
-    this.kilometer = kilometer;
   }
 }

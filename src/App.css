@@ -34,7 +34,7 @@ table {
   width: fit-content;
 }
 
-thead, tbody {
+thead {
   padding: 15px;
 }
 
@@ -65,7 +65,3 @@ tbody td:last-child span {
   cursor: pointer;
 }
 
-.change {
-  background-image: url('./img/edit.png');
-  background-size: contain;
-}

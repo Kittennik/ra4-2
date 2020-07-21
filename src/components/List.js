@@ -1,41 +1,47 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import TrainingModel from '../model/TrainingModel';
+import TrainingItem from './TrainingItem'
 
 export default function List(props) {
-  const { data } = props;
+  const { trainings } = props;
 
-  const onRemove = (id) => {
-    props.onRemove(id);
-  };
+  const handleEdit = (id) => props.onEdit(id);
+  const handleRemove = (id) => props.onRemove(id);
 
-  const onChange = (objValue) => {
-    props.onChange(objValue);
-  };
+  const sortedTrainings = trainings.sort((a, b) => {
+    if (Date.parse(a.date) < Date.parse(b.date)) return 1;
+    return -1;
+  });
 
   return (
-    <React.Fragment>
-      {data.map((o) => (
-        <tr key={o.id}>
-          <td>{o.date}</td>
-          <td>{o.distance}{o.kilometer}</td>
-          <td>
-            <span className="change" onClick={() => onChange({
-              id: o.id,
-              date: o.date,
-              distance: o.distance,
-              kilometer: o.kilometer,
-            })}> </span>
-            <span className="remove" onClick={() => onRemove(o.id)}>✘</span>
-          </td>
-        </tr>
-      ))}
-    </React.Fragment>
+    <>
+    <table>
+        <thead>
+          <tr>
+            <td>Дата (ДД.ММ.ГГ)</td>
+            <td>Пройдено км</td>
+            <td>Действия</td>
+          </tr>
+        </thead>
+        <tbody>
+      {sortedTrainings.map((o) => 
+        <TrainingItem
+        item={o}
+        onEdit={() => handleEdit(o.id)}
+        onRemove={() => handleRemove(o.id)}
+        key={o.id}
+        />
+        )
+      }
+      </tbody>
+      </table>
+    </>
   );
 }
 
 List.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.instanceOf(TrainingModel)).isRequired,
+  trainings: PropTypes.object.isRequired,
   onRemove: PropTypes.func.isRequired,
-  onChange: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
 };
+

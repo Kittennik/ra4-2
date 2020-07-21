@@ -1,94 +1,63 @@
 import React, { useState } from 'react';
-import moment from 'moment';
-import shortid from 'shortid';
+import TrainingModel from '../model/TrainingModel';
 import AddForm from './AddForm';
 import List from './List';
-import TrainingModel from '../model/TrainingModel';
+import moment from 'moment';
 
-export default function TrainingBase() {
-  const [trainings, setTrainings] = useState([]);
-  const [form, setForm] = useState({
-    id: '',
-    date: '',
-    distance: '',
-  });
+export default function TrainingBase(props) {
+  const [ trainings, setTrainings ] = useState([]);
+  const [ editingID, setEditingID ] = useState();
+  const [ form, setForm ] = useState({ date: '', distance: '' });
 
-  const sortTrainings = trainings.sort((a, b) => moment(b.date, 'DD.MM.YY') - moment(a.date, 'DD.MM.YY'));
-
-  const trainingsAddChange = (trainings, training) => {
-    const changeTrainings = trainings;
-    const findItem = changeTrainings.findIndex((item) => item.date === training.date);
-
-    if (findItem === -1) {
-      changeTrainings.push(training);
-      return changeTrainings;
-    }
-  
-    changeTrainings[findItem].distance += training.distance;
-    changeTrainings[findItem].kilometer = changeTrainings[findItem].kilometer || training.kilometer;
-  
-    return changeTrainings;
-  }
-
-  const handleFormChange = (objValue) => {
-    const { name, value } = objValue;
-    setForm((prevForm) => ({ ...prevForm, [name]: value }));
+  const handleChange = (name, value) => {
+    setForm(prevForm => ({...prevForm, [name]: value}));
   };
 
-  const handleFormSubmit = (objValue) => {
-    const { date, distance, kilometer } = objValue;
+  const handleSubmit = () => {
+    const { distance } = form;
+    const mDate = moment(form.date, 'DD.MM.YY', true);
+    if (!mDate.isValid()) return;
+    const date = mDate.toDate();
 
-    if (!form.id) {
-      const training = new TrainingModel(shortid.generate(), date, distance, kilometer);
-
-      setTrainings([...trainingsAddChange(trainings, training)]);
-    } else {
-      setTrainings((prevTrainings) => prevTrainings.map((itemTraining) => {
-        if (itemTraining.id === form.id) {
-          return new TrainingModel(form.id, date, distance, kilometer);
-        }
-        return itemTraining;
+    if (editingID) {
+      const oldDate = trainings.find((o) => o.id === editingID).date;
+      setTrainings((prevTrainings) => prevTrainings.map((o) => {
+        if (o.date.valueOf() === oldDate.valueOf()) return new TrainingModel(date, Number(distance));
+        return o;
       }));
+    } else {
+      if (trainings.find((o) => o.date.valueOf() === date.valueOf())) {
+        setTrainings((prevTrainings) => prevTrainings.map((o) => {
+          if (o.date.valueOf() === date.valueOf()) return new TrainingModel(date, Number(distance) + o.distance);
+          return o;
+        }));
+      } else {
+        setTrainings((prevTrainings) => [...prevTrainings, new TrainingModel(date, Number(distance))]);
+      }
     }
-
-    setForm({
-      id: '',
-      date: '',
-      distance: '',
-    });
-  };
+    
+    setForm({ date: '', distance: '' });
+    setEditingID(null);
+  }
 
   const handleRemove = (id) => {
     setTrainings((prevTrainings) => prevTrainings.filter((o) => o.id !== id));
-  };
+  }
 
-  const handleChange = (objValue) => {
-    setForm({
-      id: objValue.id,
-      date: objValue.date,
-      distance: `${objValue.distance}${objValue.kilometer}`,
-    });
-  };
+  const handleEdit = (id) => {
+    const training = trainings.find((o) => o.id === id);
+    setEditingID(training.id);
+    setForm({ date: moment(training.date).format('DD.MM.YY'), distance: training.distance });
+  }
 
   return (
     <>
       <AddForm
-        valueForm={form}
-        onFormChange={handleFormChange}
-        onFormSubmit={handleFormSubmit}
+        form={form}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
       />
-      <table>
-        <thead>
-          <tr>
-            <td>Дата (ДД.ММ.ГГ)</td>
-            <td>Пройдено км</td>
-            <td>Действия</td>
-          </tr>
-        </thead>
-        <tbody>
-          <List data={sortTrainings} onRemove={handleRemove} onChange={handleChange} />
-        </tbody>
-      </table>
-    </>
-  );
+      <List trainings={trainings} onRemove={handleRemove} onEdit={handleEdit} />
+    </>  
+  )
 }
